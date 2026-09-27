@@ -17,6 +17,8 @@
 - HTML / CSS (шаблоны Django)
 - Pillow (для изображений)
 
+## Структура проекта
+
 ## Установка и запуск
 
 ### 1. Клонировать репозиторий
@@ -24,4 +26,19 @@
 ```bash
 git clone https://github.com/Banan41k78/children_cafe.git
 cd children_cafe
+```
 
+### 2. Создать виртуальное окружение
+
+Windows:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+Linux / macOS:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
