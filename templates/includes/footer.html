@@ -1,0 +1,27 @@
+{% load static %}
+<footer>
+    <div class="footer-container">
+        <div class="footer-col">
+            <img src="{% static 'images/logo.jpg' %}" alt="Logo" height="50" style="border-radius: 10px;">
+            <p style="margin-top: 10px;">Детское кафе «Сладкая страна»</p>
+        </div>
+        <div class="footer-col">
+            <h4>Контакты</h4>
+            <p> -</p>
+            <p> +99999999</p>
+            <p>✉ hello@kidscafe.ru</p>
+        </div>
+        <div class="footer-col">
+            <h4>Мы в соцсетях</h4>
+            <div class="social-links">
+                <a href="#">📘</a>
+                <a href="#">📸</a>
+                <a href="#">🎵</a>
+                <a href="#">💬</a>
+            </div>
+        </div>
+    </div>
+    <div class="copyright">
+        © {% now "Y" %} Все права защищены. Сделано с ❤️ для детей.
+    </div>
+</footer>

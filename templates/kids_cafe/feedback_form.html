@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Оставить отзыв{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Интерактивные звёзды (как в комментариях) */
+    .star-rating-widget {
+        margin-bottom: 20px;
+    }
+    .star-rating-widget .stars {
+        display: flex;
+        gap: 8px;
+        font-size: 2rem;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+    .star-rating-widget .stars span {
+        color: #ccc;
+        transition: color 0.2s;
+    }
+    .star-rating-widget .stars span.selected,
+    .star-rating-widget .stars span.hover {
+        color: #ffa502;
+        text-shadow: 0 0 2px #ffa502;
+    }
+
+    /* Кастомный dropdown для блюд */
+    .dishes-dropdown {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .dishes-dropdown .dropdown-toggle {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #ffd1d1;
+        border-radius: 15px;
+        background-color: #fffef7;
+        cursor: pointer;
+        text-align: left;
+        font-family: inherit;
+        font-size: 1rem;
+    }
+    .dishes-dropdown .dropdown-toggle:focus {
+        border-color: #ffa502;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 165, 2, 0.2);
+    }
+    .dishes-dropdown .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid #ffa502;
+        border-radius: 15px;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 10;
+        display: none;
+        margin-top: 5px;
+        padding: 10px;
+    }
+    .dishes-dropdown .dropdown-menu.open {
+        display: block;
+    }
+    .dish-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 25px;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+    .dish-option:hover {
+        background-color: #ffeaa7;
+    }
+    .dish-option input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    .dish-option label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: normal;
+    }
+    .selected-dishes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .selected-dish-tag {
+        background-color: #ffeaa7;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .selected-dish-tag .remove {
+        cursor: pointer;
+        font-weight: bold;
+        color: #ff4757;
+    }
+
+    .average-rating {
+        background-color: #ffeaa7;
+        padding: 15px;
+        border-radius: 25px;
+        text-align: center;
+        margin-top: 20px;
+        font-size: 1.2rem;
+    }
+    .average-stars {
+        color: #ffa502;
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h2 class="text-center" style="color: #ff4757;">📝 Оставить отзыв</h2>
+    <p class="text-center">Поделитесь впечатлениями о нашем кафе. Мы ценим ваше мнение!</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="feedbackForm">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>{{ form.comment.label }}</label>
+            {{ form.comment }}
+        </div>
+
+        <!-- Кастомный выбор блюд -->
+        <div class="dishes-dropdown">
+            <label>Какие блюда попробовали (можно несколько)?</label>
+            <div class="dropdown-toggle" id="dishesToggle">
+                Выберите блюда...
+            </div>
+            <div class="dropdown-menu" id="dishesMenu">
+                {% for dish in dishes_list %}
+                <div class="dish-option">
+                    <input type="checkbox" name="dishes" value="{{ dish.id }}" id="dish_{{ dish.id }}" class="dish-checkbox">
+                    <label for="dish_{{ dish.id }}">{{ dish.title }}</label>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="selected-dishes" id="selectedDishes"></div>
+        </div>
+
+        <!-- Оценка еды -->
+        <div class="star-rating-widget">
+            <label>Оценка еды</label>
+            <input type="hidden" name="food_rating" id="foodRatingValue" value="0">
+            <div class="stars" data-target="foodRatingValue">
+                <span data-value="1">☆</span>
+                <span data-value="2">☆</span>
+                <span data-value="3">☆</span>
+                <span data-value="4">☆</span>
+                <span data-value="5">☆</span>
+            </div>
+        </div>
+
+        <!-- Оценка обслуживания -->
+        <div class="star-rating-widget">
+            <label>Оценка обслуживания</label>
+            <input type="hidden" name="service_rating" id="serviceRatingValue" value="0">
+            <div class="stars" data-target="serviceRatingValue">
+                <span data-value="1">☆</span>
+                <span data-value="2">☆</span>
+                <span data-value="3">☆</span>
+                <span data-value="4">☆</span>
+                <span data-value="5">☆</span>
+            </div>
+        </div>
+
+        <!-- Оценка атмосферы -->
+        <div class="star-rating-widget">
+            <label>Оценка атмосферы</label>
+            <input type="hidden" name="atmosphere_rating" id="atmosphereRatingValue" value="0">
+            <div class="stars" data-target="atmosphereRatingValue">
+                <span data-value="1">☆</span>
+                <span data-value="2">☆</span>
+                <span data-value="3">☆</span>
+                <span data-value="4">☆</span>
+                <span data-value="5">☆</span>
+            </div>
+        </div>
+
+        <div class="average-rating" id="averageBlock">
+            <strong>Средняя оценка (ОС):</strong> <span id="avgValue">0</span> ★
+            <div id="avgStars" class="average-stars">☆☆☆☆☆</div>
+        </div>
+
+        <button type="submit" class="btn-submit">Отправить отзыв</button>
+    </form>
+</div>
+
+<script>
+    // === 1. Звёзды (как в комментариях) ===
+    function initStarRating(widget) {
+        const stars = widget.querySelectorAll('.stars span');
+        const inputId = widget.querySelector('.stars').dataset.target;
+        const ratingInput = document.getElementById(inputId);
+
+        function updateStars(value) {
+            stars.forEach((star, idx) => {
+                if (idx < value) {
+                    star.classList.add('selected');
+                    star.innerText = '★';
+                } else {
+                    star.classList.remove('selected');
+                    star.innerText = '☆';
+                }
+            });
+        }
+
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                let val = parseInt(this.dataset.value);
+                stars.forEach((s, idx) => {
+                    if (idx < val) {
+                        s.classList.add('hover');
+                        s.innerText = '★';
+                    } else {
+                        s.classList.remove('hover');
+                        s.innerText = '☆';
+                    }
+                });
+            });
+            star.addEventListener('mouseleave', function() {
+                let currentVal = parseInt(ratingInput.value);
+                stars.forEach((s, idx) => {
+                    if (idx < currentVal) {
+                        s.classList.add('selected');
+                        s.innerText = '★';
+                    } else {
+                        s.classList.remove('selected');
+                        s.innerText = '☆';
+                    }
+                });
+            });
+            star.addEventListener('click', function() {
+                let val = parseInt(this.dataset.value);
+                ratingInput.value = val;
+                updateStars(val);
+                updateAverage();
+            });
+        });
+
+        if (ratingInput.value > 0) updateStars(parseInt(ratingInput.value));
+    }
+
+    // Пересчёт средней оценки
+    function updateAverage() {
+        let food = parseInt(document.getElementById('foodRatingValue').value) || 0;
+        let service = parseInt(document.getElementById('serviceRatingValue').value) || 0;
+        let atmosphere = parseInt(document.getElementById('atmosphereRatingValue').value) || 0;
+        let count = 0, sum = 0;
+        if (food) { sum += food; count++; }
+        if (service) { sum += service; count++; }
+        if (atmosphere) { sum += atmosphere; count++; }
+        let avg = count ? (sum / count).toFixed(1) : 0;
+        document.getElementById('avgValue').innerText = avg;
+        
+        let starsHtml = '';
+        let full = Math.floor(avg);
+        let half = (avg - full) >= 0.5;
+        for (let i = 1; i <= 5; i++) {
+            if (i <= full) starsHtml += '★';
+            else if (half && i === full+1) starsHtml += '★';
+            else starsHtml += '☆';
+        }
+        document.getElementById('avgStars').innerHTML = starsHtml;
+    }
+
+    // Инициализация звёзд
+    document.querySelectorAll('.star-rating-widget').forEach(widget => initStarRating(widget));
+
+    document.getElementById('foodRatingValue').addEventListener('change', updateAverage);
+    document.getElementById('serviceRatingValue').addEventListener('change', updateAverage);
+    document.getElementById('atmosphereRatingValue').addEventListener('change', updateAverage);
+    updateAverage();
+
+    // === 2. Кастомный dropdown для блюд ===
+    const toggle = document.getElementById('dishesToggle');
+    const menu = document.getElementById('dishesMenu');
+    const checkboxes = document.querySelectorAll('.dish-checkbox');
+    const selectedContainer = document.getElementById('selectedDishes');
+
+    function updateSelectedDisplay() {
+        const selected = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const label = cb.nextElementSibling.innerText;
+                selected.push({ id: cb.value, name: label });
+            }
+        });
+        // Обновляем текст на кнопке
+        if (selected.length === 0) {
+            toggle.innerText = 'Выберите блюда...';
+        } else {
+            toggle.innerText = `Выбрано ${selected.length} блюд`;
+        }
+        // Отображаем выбранные блюда тегами
+        selectedContainer.innerHTML = '';
+        selected.forEach(dish => {
+            const tag = document.createElement('span');
+            tag.className = 'selected-dish-tag';
+            tag.innerHTML = `${dish.name} <span class="remove" data-id="${dish.id}">✕</span>`;
+            selectedContainer.appendChild(tag);
+        });
+        // Обработчики удаления
+        document.querySelectorAll('.selected-dish-tag .remove').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const id = this.dataset.id;
+                const cb = document.querySelector(`.dish-checkbox[value="${id}"]`);
+                if (cb) cb.checked = false;
+                updateSelectedDisplay();
+            });
+        });
+    }
+
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('open');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.remove('open');
+        }
+    });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelectedDisplay);
+    });
+
+    updateSelectedDisplay();
+
+    // Убедимся, что при отправке формы все чекбоксы отправляются
+    // (они и так отправятся, т.к. находятся внутри формы и имеют name="dishes")
+</script>
+{% endblock %}

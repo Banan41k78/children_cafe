@@ -1,0 +1,26 @@
+{% load static %}
+<div class="navbar">
+    <div class="container">
+        <a href="{% url 'kids_cafe:index' %}" class="navbar-brand">
+            <img src="{% static 'images/logo.jpg' %}" alt="Логотип">
+            🍭 Сладкая страна
+        </a>
+<div class="nav-links">
+    <a href="{% url 'kids_cafe:index' %}">Главная</a>
+    <a href="{% url 'kids_cafe:catalog' %}">Меню</a>
+    <a href="{% url 'kids_cafe:about' %}">О нас</a>
+    <a href="{% url 'kids_cafe:contacts' %}">Контакты</a>
+    <a href="{% url 'kids_cafe:rental_form' %}">Аренда</a>
+    <a href="{% url 'kids_cafe:job_form' %}">Вакансии</a>
+	  {% if user.is_authenticated %}
+        <a href="{% url 'kids_cafe:profile' %}">{{ user.username }}</a>
+    {% else %}
+        <a href="{% url 'login' %}">Вход</a>
+        <a href="{% url 'kids_cafe:register' %}">Регистрация</a>
+    {% endif %}
+	<a href="{% url 'kids_cafe:feedback_form' %}">📝 Оставить отзыв</a>
+<a href="{% url 'kids_cafe:feedback_list' %}">📖 Отзывы</a>
+	
+</div>
+    </div>
+</div>

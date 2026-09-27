@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 0 auto;">
+    <h2 class="text-center" style="color: #ff4757;">🔑 Вход</h2>
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Логин</label>
+            <input type="text" name="username" class="form-control" required autofocus>
+        </div>
+
+        <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+
+        {% if form.errors %}
+            <div class="errorlist">Неверный логин или пароль.</div>
+        {% endif %}
+
+        <button type="submit" class="btn-submit">🚪 Войти</button>
+    </form>
+    <p class="text-center mt-3">Нет аккаунта? <a href="{% url 'kids_cafe:register' %}">Зарегистрироваться</a></p>
+</div>
+{% endblock %}

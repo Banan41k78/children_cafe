@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Аренда зала{% endblock %}
+{% block extra_css %}
+<style>
+    /* Календарь */
+    .custom-calendar {
+        max-width: 400px;
+        margin: 0 auto;
+        background: #fff9f0;
+        border-radius: 25px;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .calendar-header button {
+        background: #ffa502;
+        border: none;
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        color: white;
+        font-weight: bold;
+    }
+    .calendar-weekdays, .calendar-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+    }
+    .calendar-weekdays div {
+        font-weight: bold;
+        padding: 10px 0;
+        color: #ff6b6b;
+    }
+    .calendar-day {
+        padding: 10px 0;
+        cursor: pointer;
+        border-radius: 50%;
+        margin: 3px;
+        transition: 0.2s;
+    }
+    .calendar-day:hover:not(.disabled):not(.selected) {
+        background-color: #ffeaa7;
+    }
+    .calendar-day.selected {
+        background-color: #ffa502;
+        color: white;
+    }
+    .calendar-day.disabled {
+        background-color: #ffd1d1;
+        color: #aaa;
+        cursor: not-allowed;
+    }
+    .time-picker {
+        margin-top: 20px;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+    .time-picker select {
+        padding: 10px;
+        border-radius: 50px;
+        border: 2px solid #ffa502;
+        background: white;
+        font-size: 1rem;
+    }
+    .duration-info {
+        text-align: center;
+        margin: 15px 0;
+        font-weight: bold;
+        color: #2d3436;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h2 class="text-center" style="color: #ff4757;">🎈 Аренда зала</h2>
+    <p class="text-center">Минимум 3 часа. Серые даты – заняты.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="rentalForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>{{ form.full_name.label }}</label>
+            {{ form.full_name }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.phone.label }}</label>
+            {{ form.phone }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.email.label }}</label>
+            {{ form.email }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.event_type.label }}</label>
+            {{ form.event_type }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.guests_count.label }}</label>
+            {{ form.guests_count }}
+        </div>
+
+        <!-- Календарь и время -->
+        <div class="custom-calendar" id="calendarWidget"></div>
+        
+        <div class="time-picker">
+            <div>
+                <label>Начало:</label>
+
+                <select id="startHour"></select> : <select id="startMinute"></select>
+            </div>
+            <div>
+                <label>Конец:</label>
+
+                <select id="endHour"></select> : <select id="endMinute"></select>
+            </div>
+        </div>
+        <div class="duration-info" id="durationInfo"></div>
+
+        <input type="hidden" id="selectedDate" name="selected_date">
+        <input type="hidden" id="startDatetime" name="start_datetime">
+        <input type="hidden" id="endDatetime" name="end_datetime">
+
+        <div class="form-group">
+            <label>{{ form.comment.label }}</label>
+            {{ form.comment }}
+        </div>
+
+        <div id="formError" class="errorlist" style="display:none; margin-bottom: 15px;"></div>
+        <button type="submit" class="btn-submit" id="submitBtn">📩 Отправить заявку</button>
+    </form>
+</div>
+
+<script>
+    // Занятые слоты из БД (передаются из views)
+    const busySlots = {{ busy_slots|safe }};
+    
+    let currentDate = new Date();
+    let selectedDateStr = ''; // YYYY-MM-DD
+    let selectedStart = null;
+    let selectedEnd = null;
+
+    // Генерация опций для часов (0-23) и минут (0,30)
+    function populateTimeSelects() {
+        const startHour = document.getElementById('startHour');
+        const startMinute = document.getElementById('startMinute');
+        const endHour = document.getElementById('endHour');
+        const endMinute = document.getElementById('endMinute');
+        
+        // Часы 0-23
+        for (let h = 0; h < 24; h++) {
+            let val = h.toString().padStart(2,'0');
+            startHour.add(new Option(val, val));
+            endHour.add(new Option(val, val));
+        }
+        // Минуты: 0 и 30
+        [0, 30].forEach(m => {
+            let val = m.toString().padStart(2,'0');
+            startMinute.add(new Option(val, val));
+            endMinute.add(new Option(val, val));
+        });
+        
+        // Устанавливаем значения по умолчанию (начало в 10:00, конец в 13:00)
+        startHour.value = '10';
+        startMinute.value = '00';
+        endHour.value = '13';
+        endMinute.value = '00';
+    }
+
+    // Проверка, занят ли весь день (если есть бронь, покрывающая любой интервал)
+    function isDateFullyDisabled(dateStr) {
+        // Любая бронь, пересекающаяся с этим днём
+        const targetDate = new Date(dateStr);
+        const nextDay = new Date(targetDate);
+        nextDay.setDate(targetDate.getDate() + 1);
+        
+        for (let slot of busySlots) {
+            let slotStart = new Date(slot.start);
+            let slotEnd = new Date(slot.end);
+            if (slotStart < nextDay && slotEnd > targetDate) {
+                // есть пересечение
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Проверка доступности конкретного интервала
+    function isSlotAvailable(startDateTime, endDateTime) {
+        for (let slot of busySlots) {
+            let s = new Date(slot.start);
+            let e = new Date(slot.end);
+            if (startDateTime < e && endDateTime > s) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Обновление информации о длительности и блокировка кнопки
+    function updateDuration() {
+        const startHour = parseInt(document.getElementById('startHour').value);
+        const startMinute = parseInt(document.getElementById('startMinute').value);
+        const endHour = parseInt(document.getElementById('endHour').value);
+        const endMinute = parseInt(document.getElementById('endMinute').value);
+        const dateStr = selectedDateStr;
+        
+        if (!dateStr) return;
+        
+        let startDate = new Date(dateStr + 'T' + startHour.toString().padStart(2,'0') + ':' + startMinute.toString().padStart(2,'0') + ':00');
+        let endDate = new Date(dateStr + 'T' + endHour.toString().padStart(2,'0') + ':' + endMinute.toString().padStart(2,'0') + ':00');
+        let now = new Date();
+        
+        let errorMsg = '';
+        let ok = true;
+        
+        if (startDate < now) {
+            errorMsg = 'Время начала не может быть в прошлом.';
+            ok = false;
+        } else if (endDate <= startDate) {
+            errorMsg = 'Конец аренды должен быть позже начала.';
+            ok = false;
+        } else {
+            let diffHours = (endDate - startDate) / (1000 * 3600);
+            if (diffHours < 3) {
+                errorMsg = `Минимум 3 часа (сейчас ${diffHours.toFixed(1)} ч).`;
+                ok = false;
+            } else if (!isSlotAvailable(startDate, endDate)) {
+                errorMsg = 'Этот интервал уже занят. Выберите другое время.';
+                ok = false;
+            } else {
+                document.getElementById('durationInfo').innerHTML = `✅ Длительность: ${diffHours.toFixed(1)} часов`;
+            }
+        }
+        
+        if (!ok) {
+            document.getElementById('durationInfo').innerHTML = `❌ ${errorMsg}`;
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('formError').innerText = errorMsg;
+            document.getElementById('formError').style.display = 'block';
+            return false;
+        } else {
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('formError').style.display = 'none';
+            // Заполняем скрытые поля
+            document.getElementById('startDatetime').value = startDate.toISOString().slice(0,16).replace('T',' ');
+            document.getElementById('endDatetime').value = endDate.toISOString().slice(0,16).replace('T',' ');
+            return true;
+        }
+    }
+
+    // Рендер календаря на текущий месяц
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startWeekday = firstDay.getDay(); // 0=воскр, но начнём с понедельника -> скорректируем
+        let daysInMonth = lastDay.getDate();
+        
+        let calendarDiv = document.getElementById('calendarWidget');
+        let html = `
+            <div class="calendar-header">
+                <button id="prevMonth">&lt;</button>
+                <span>${currentDate.toLocaleString('ru', {month: 'long', year: 'numeric'})}</span>
+                <button id="nextMonth">&gt;</button>
+            </div>
+            <div class="calendar-weekdays">
+                <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+        `;
+        calendarDiv.innerHTML = html;
+        
+        // Строим сетку дней
+        let daysGrid = document.getElementById('calendarDays');
+        let dayNumber = 1;
+        // Определяем, сколько пустых ячеек в начале (если 1й день - среда, то индекс 2)
+        let startOffset = (startWeekday === 0 ? 6 : startWeekday - 1); // понедельник =0
+        for (let i = 0; i < startOffset; i++) {
+            let emptyDiv = document.createElement('div');
+            emptyDiv.classList.add('calendar-day');
+            emptyDiv.style.visibility = 'hidden';
+            daysGrid.appendChild(emptyDiv);
+        }
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            let dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
+            let dayDiv = document.createElement('div');
+            dayDiv.classList.add('calendar-day');
+            dayDiv.textContent = d;
+            
+            if (isDateFullyDisabled(dateStr)) {
+                dayDiv.classList.add('disabled');
+                dayDiv.style.cursor = 'not-allowed';
+            } else {
+                dayDiv.addEventListener('click', (function(date) {
+                    return function() {
+                        // Убираем выделение со всех дней
+                        document.querySelectorAll('.calendar-day').forEach(day => day.classList.remove('selected'));
+                        this.classList.add('selected');
+                        selectedDateStr = date;
+                        document.getElementById('selectedDate').value = date;
+                        // После выбора даты проверяем длительность
+                        updateDuration();
+                    };
+                })(dateStr));
+            }
+            daysGrid.appendChild(dayDiv);
+        }
+        
+        // Обработчики переключения месяца
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+    }
+    
+    // Инициализация
+    window.addEventListener('DOMContentLoaded', () => {
+        populateTimeSelects();
+        renderCalendar();
+        
+        // Слушатели изменения времени
+        const selects = ['startHour', 'startMinute', 'endHour', 'endMinute'];
+        selects.forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                if (selectedDateStr) updateDuration();
+            });
+        });
+        
+        // Отключаем стандартный submit, чтобы проверить
+        document.getElementById('rentalForm').addEventListener('submit', (e) => {
+            if (!selectedDateStr) {
+                e.preventDefault();
+                alert('Выберите дату в календаре');
+                return;
+            }
+            if (document.getElementById('submitBtn').disabled) {
+                e.preventDefault();
+                alert('Исправьте ошибки в выборе даты/времени');
+            }
+        });
+    });
+</script>
+{% endblock %}

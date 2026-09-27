@@ -1,0 +1,36 @@
+{% load static %}
+<div class="comment-item" data-id="{{ comment.id }}" style="margin-bottom: 20px; border-left: 3px solid #ffa502; padding-left: 15px;">
+    <div class="comment-header" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;">
+        <strong>{{ comment.author.username }}</strong>
+        <span class="rating-stars">
+            {% if comment.rating %}
+                {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= comment.rating %}★{% else %}☆{% endif %}
+                {% endfor %}
+            {% endif %}
+        </span>
+        <span class="comment-date" style="color: #888; font-size: 0.8rem;">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+    </div>
+    <div class="comment-text" style="margin: 8px 0;">
+        {{ comment.text|linebreaksbr }}
+    </div>
+    <div class="comment-actions" style="display: flex; gap: 15px; margin-bottom: 10px;">
+        <button class="like-btn" data-id="{{ comment.id }}">❤️ <span class="like-count">{{ comment.total_likes }}</span></button>
+        <button class="reply-btn" data-id="{{ comment.id }}">Ответить</button>
+    </div>
+    <div class="reply-form" id="reply-form-{{ comment.id }}" style="display: none; margin: 10px 0 20px 0;">
+        <form method="post" action="{% url 'kids_cafe:add_comment' item.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            {{ comment_form.as_p }}
+            <button type="submit" class="btn-kid">Отправить ответ</button>
+        </form>
+    </div>
+    {% if comment.replies.all %}
+        <div class="replies" style="margin-left: 30px; border-left: 1px dashed #ffa502; padding-left: 15px;">
+            {% for reply in comment.replies.all %}
+                {% include 'kids_cafe/comment_item.html' with comment=reply comment_form=comment_form %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

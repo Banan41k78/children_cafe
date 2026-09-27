@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Анкета соискателя{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <h2 class="text-center" style="color: #ff4757;">🧑‍🍳 Работа в «Сладкой стране»</h2>
+    <p class="text-center">Заполните анкету, и мы пригласим вас на собеседование.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.full_name.id_for_label }}">ФИО *</label>
+            {{ form.full_name }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.age.id_for_label }}">Возраст</label>
+            {{ form.age }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.phone.id_for_label }}">Телефон *</label>
+            {{ form.phone }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}">Email *</label>
+            {{ form.email }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.position.id_for_label }}">Желаемая должность</label>
+            {{ form.position }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.experience.id_for_label }}">Опыт работы</label>
+            {{ form.experience }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.available_interview.id_for_label }}">Удобное время для собеседования *</label>
+            {{ form.available_interview }}
+            <small style="color: #888;">Например: 2025-05-10 15:00</small>
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.comment.id_for_label }}">Дополнительная информация</label>
+            {{ form.comment }}
+        </div>
+
+        {% if form.non_field_errors %}
+            <ul class="errorlist">{{ form.non_field_errors }}</ul>
+        {% endif %}
+
+        <button type="submit" class="btn-submit">✉️ Отправить анкету</button>
+    </form>
+</div>
+{% endblock %}

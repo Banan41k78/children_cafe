@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}О нас{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>{{ title }}</h2>
+    <p style="font-size: 1.2rem;">{{ description }}</p>
+    <div class="row" style="margin-top: 30px;">
+        <div class="col">
+            <h4>⭐ Наши преимущества</h4>
+            <ul style="margin-left: 20px;">
+                <li>Детские стульчики и меню</li>
+                <li>Аниматоры каждые выходные</li>
+                <li>Wi-Fi и розетки для родителей</li>
+            </ul>
+        </div>
+        <div class="col">
+            <img src="{% static 'images/cafe_image.jpeg' %}" style="width: 100%; border-radius: 25px;" alt="Фото кафе">
+        </div>
+    </div>
+</div>
+{% endblock %}

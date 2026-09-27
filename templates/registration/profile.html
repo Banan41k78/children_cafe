@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+<h2 class="text-center" style="color: #ff4757;">{{ user.username }}</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <h3>Мои данные</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>{{ profile_form.phone.label }}</label>
+                    {{ profile_form.phone }}
+                </div>
+                <div class="form-group">
+                    <label>{{ profile_form.address.label }}</label>
+                    {{ profile_form.address }}
+                </div>
+                <div class="form-group">
+                    <label>{{ profile_form.birth_date.label }}</label>
+                    {{ profile_form.birth_date }}
+                </div>
+                <button type="submit" class="btn-submit">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <h3>Мои бронирования</h3>
+            {% if rentals %}
+                <ul class="list-unstyled">
+                {% for rental in rentals %}
+                    <li><strong>{{ rental.start_datetime|date:"d.m.Y H:i" }}</strong> — {{ rental.end_datetime|date:"H:i" }}, гостей: {{ rental.guests_count }}, статус: {{ rental.get_status_display }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>У вас пока нет броней.</p>
+            {% endif %}
+			
+            <a href="{% url 'kids_cafe:rental_form' %}" class="btn-submit" style = "padding-top: 0px">Забронировать зал</a>
+        </div>
+        <div class="card mt-3" style="background-color: #ffeaa7;">
+            <h3>Выход из аккаунта</h3>
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-submit" style="background-color: #ff4757; width: auto;">Выйти</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

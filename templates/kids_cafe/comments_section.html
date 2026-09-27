@@ -1,0 +1,260 @@
+{% load static custom_filters %}
+
+<style>
+    /* Блок комментариев */
+    .comments-section {
+        margin-top: 40px;
+    }
+    .comments-section h3 {
+        color: #3742fa;
+        margin-bottom: 20px;
+    }
+    .add-comment {
+        background-color: #fff9f0;
+        border-radius: 25px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .comment-item {
+        background-color: #fffef7;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #ffa502;
+        transition: background 0.2s;
+    }
+    .comment-item:hover {
+        background-color: #fff5e6;
+    }
+    .comment-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: baseline;
+        margin-bottom: 8px;
+    }
+    .comment-header strong {
+        color: #ff4757;
+    }
+    .rating-stars {
+        color: #ffa502;
+        font-size: 0.9rem;
+    }
+    .comment-date {
+        color: #888;
+        font-size: 0.8rem;
+    }
+    .comment-text {
+        margin: 10px 0;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+    .comment-actions {
+        display: flex;
+        gap: 20px;
+        margin: 10px 0 5px;
+    }
+    .like-btn, .reply-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+        transition: 0.2s;
+    }
+    .like-btn {
+        color: #ff6b6b;
+    }
+    .reply-btn {
+        color: #0984e3;
+    }
+    .like-btn:hover, .reply-btn:hover {
+        background-color: #ffeaa7;
+    }
+    .reply-form {
+        margin: 15px 0 10px 25px;
+    }
+    .replies {
+        margin-top: 15px;
+        margin-left: 30px;
+        border-left: 2px dashed #ffa502;
+        padding-left: 20px;
+    }
+
+    /* Интерактивные звёзды */
+    .star-rating-widget .stars {
+        display: flex;
+        gap: 8px;
+        font-size: 2rem;
+        cursor: pointer;
+    }
+    .star-rating-widget .stars span {
+        color: #ccc;
+        transition: color 0.2s;
+    }
+    .star-rating-widget .stars span.selected,
+    .star-rating-widget .stars span.hover {
+        color: #ffa502;
+        text-shadow: 0 0 2px #ffa502;
+    }
+</style>
+
+<div class="comments-section">
+    <h3>💬 Комментарии и оценки</h3>
+
+    {% if user.is_authenticated %}
+    <div class="add-comment">
+        <h4>Оставить новый комментарий</h4>
+        <form method="post" action="{% url 'kids_cafe:add_comment' item.id %}" id="commentForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Ваш комментарий</label>
+                <textarea name="text" rows="3" class="form-control" placeholder="Напишите отзыв..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Оценка (звёзды)</label>
+                <div class="star-rating-widget">
+                    <input type="hidden" name="rating" id="ratingValue" value="0">
+                    <div class="stars" id="ratingStars">
+                        <span data-value="1">☆</span>
+                        <span data-value="2">☆</span>
+                        <span data-value="3">☆</span>
+                        <span data-value="4">☆</span>
+                        <span data-value="5">☆</span>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="parent_id" id="replyParentId" value="">
+            <button type="submit" class="btn-kid">✏️ Отправить</button>
+        </form>
+    </div>
+    {% else %}
+    <p><a href="{% url 'login' %}">Войдите</a>, чтобы оставить комментарий или оценку.</p>
+    {% endif %}
+
+    <div class="comments-list">
+        {% for comment in comments %}
+            {% include 'kids_cafe/comment_item.html' with comment=comment comment_form=comment_form %}
+        {% empty %}
+            <p>Пока нет комментариев. Будьте первым!</p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // === 1. Интерактивные звёзды ===
+    const stars = document.querySelectorAll('#ratingStars span');
+    const ratingInput = document.getElementById('ratingValue');
+
+    function updateStars(value) {
+        stars.forEach((star, idx) => {
+            if (idx < value) {
+                star.classList.add('selected');
+                star.innerText = '★';
+            } else {
+                star.classList.remove('selected');
+                star.innerText = '☆';
+            }
+        });
+    }
+
+    stars.forEach(star => {
+        star.addEventListener('mouseenter', function() {
+            let val = parseInt(this.dataset.value);
+            stars.forEach((s, idx) => {
+                if (idx < val) {
+                    s.classList.add('hover');
+                    s.innerText = '★';
+                } else {
+                    s.classList.remove('hover');
+                    s.innerText = '☆';
+                }
+            });
+        });
+        star.addEventListener('mouseleave', function() {
+            let currentVal = parseInt(ratingInput.value);
+            stars.forEach((s, idx) => {
+                if (idx < currentVal) {
+                    s.classList.add('selected');
+                    s.innerText = '★';
+                } else {
+                    s.classList.remove('selected');
+                    s.innerText = '☆';
+                }
+            });
+        });
+        star.addEventListener('click', function() {
+            let val = parseInt(this.dataset.value);
+            ratingInput.value = val;
+            updateStars(val);
+        });
+    });
+
+    // === 2. Обработка кнопок "Ответить" (показ формы) ===
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            let id = this.dataset.id;
+            let formDiv = document.getElementById('reply-form-' + id);
+            if (formDiv.style.display === 'none') {
+                // Скрываем все остальные формы
+                document.querySelectorAll('.reply-form').forEach(f => f.style.display = 'none');
+                formDiv.style.display = 'block';
+                // Заполняем parent_id для главной формы (если надо – можно динамически)
+                let parentIdField = document.getElementById('replyParentId');
+                if (parentIdField) parentIdField.value = id;
+            } else {
+                formDiv.style.display = 'none';
+                if (document.getElementById('replyParentId')) document.getElementById('replyParentId').value = '';
+            }
+        });
+    });
+
+    // === 3. AJAX лайки ===
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            let id = this.dataset.id;
+            let likeSpan = this.querySelector('.like-count');
+            fetch(`/comment/like/${id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (likeSpan) likeSpan.innerText = data.likes;
+                // визуально можно изменить цвет кнопки
+                if (data.liked) {
+                    this.style.color = '#ff4757';
+                } else {
+                    this.style.color = '#ff6b6b';
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
+        });
+    });
+
+    // Инициализация цвета лайков при загрузке
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        // можно запросить статус лайка отдельно, но для простоты оставим как есть
+    });
+</script>

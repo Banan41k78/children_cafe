@@ -1,0 +1,66 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<h1>⚠️ Негативные отзывы и комментарии</h1>
+
+<h2>📝 Отзывы с низкими оценками (≤ 2)</h2>
+<div style="overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #79aec8; color: white;">
+                <th>Пользователь</th>
+                <th>Еда</th>
+                <th>Обслуживание</th>
+                <th>Атмосфера</th>
+                <th>Комментарий</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fb in bad_feedbacks %}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td>{{ fb.user.username }}</td>
+                <td style="text-align:center;">★{{ fb.food_rating }}</td>
+                <td style="text-align:center;">★{{ fb.service_rating }}</td>
+                <td style="text-align:center;">★{{ fb.atmosphere_rating }}</td>
+                <td>{{ fb.comment|truncatechars:100 }}</td>
+                <td>{{ fb.created_at|date:"d.m.Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">Нет негативных отзывов</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2>💬 Комментарии с оценкой 1 или 2</h2>
+<div style="overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #ffa502;">
+                <th>Автор</th>
+                <th>Блюдо</th>
+                <th>Оценка</th>
+                <th>Текст</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cm in bad_comments %}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td>{{ cm.author.username }}</td>
+                <td>{{ cm.menu_item.title }}</td>
+                <td style="text-align:center;">★{{ cm.rating }}</td>
+                <td>{{ cm.text|truncatechars:120 }}</td>
+                <td>{{ cm.created_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">Нет плохих комментариев</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p style="margin-top: 20px;"><a href="{% url 'admin:index' %}" class="button">← Назад в админку</a></p>
+{% endblock %}

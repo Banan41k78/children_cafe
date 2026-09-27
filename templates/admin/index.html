@@ -1,0 +1,13 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="content-main">
+    <div style="margin-bottom: 25px;">
+        <a href="{% url 'admin:statistics' %}" class="button" style="background-color: #ffa502; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            📊 Перейти к статистике
+        </a>
+    </div>
+    {{ block.super }}
+</div>
+{% endblock %}

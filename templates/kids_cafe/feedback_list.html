@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Отзывы о кафе{% endblock %}
+
+{% block content %}
+<h2 class="text-center" style="color: #ff4757;">💬 Отзывы наших гостей</h2>
+
+<div class="row">
+    {% for fb in feedbacks %}
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div style="display: flex; justify-content: space-between;">
+                    <strong>{{ fb.user.username }}</strong>
+                    <span>{{ fb.created_at|date:"d.m.Y" }}</span>
+                </div>
+                <div class="rating-stars">
+                    Еда: ★{{ fb.food_rating }} &nbsp; Обслуживание: ★{{ fb.service_rating }} &nbsp; Атмосфера: ★{{ fb.atmosphere_rating }}
+                </div>
+                <div class="average-stars" style="font-size: 1rem;">
+                    Среднее: {{ fb.stars_average }} ({{ fb.average_rating }})
+                </div>
+                <p class="mt-2">{{ fb.comment|truncatewords:30 }}</p>
+                {% if fb.dishes.all %}
+                <small>🍽️ Блюда: 
+                    {% for dish in fb.dishes.all %}
+                        {{ dish.title }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-center">Пока нет отзывов. Будьте первым!</p>
+    {% endfor %}
+</div>
+{% endblock %}

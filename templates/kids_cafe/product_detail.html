@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    {% if item.image %}
+    <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 100%; border-radius: 25px;">
+    {% endif %}
+    <h2>{{ item.title }}</h2>
+		
+	{% if item.avg_rating %}
+	<div class="rating-stars">
+		{% with rating=item.avg_rating %}
+			{% for i in "12345"|make_list %}
+				{% if forloop.counter <= rating %}
+					★
+				{% else %}
+					☆
+				{% endif %}
+			{% endfor %}
+			<span class="rating-value">({{ rating }})</span>
+		</div>
+		{% endwith %}
+	{% else %}
+		<div class="rating-stars">☆☆☆☆☆ (нет оценок)</div>
+	{% endif %}
+
+    <p class="lead">{{ item.description }}</p>
+    <p><strong>Цена:</strong> {{ item.price }} ₽</p>
+    <a href="{% url 'kids_cafe:catalog' %}" class="btn btn-secondary">← Назад в меню</a>
+    <!-- ===== БЛОК КОММЕНТАРИЕВ ===== -->
+    {% include 'kids_cafe/comments_section.html' %}
+    <!-- ============================= -->
+
+</div>
+{% endblock %}

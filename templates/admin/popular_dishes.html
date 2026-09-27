@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<h1>🍽️ Самые популярные блюда</h1>
+<div style="overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #79aec8; color: white;">
+                <th style="padding: 10px;">Название блюда</th>
+                <th style="padding: 10px;">Упоминаний в отзывах</th>
+                <th style="padding: 10px;">Средний рейтинг (из комментариев)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dish in dishes %}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px;"><strong>{{ dish.title }}</strong></td>
+                <td style="text-align: center;">{{ dish.feedback_count }}</td>
+                <td style="text-align: center;">
+                    {% if dish.avg_rating_from_comments %}
+                        {{ dish.avg_rating_from_comments|floatformat:1 }} ★
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">Нет данных для отображения</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p style="margin-top: 20px;"><a href="{% url 'admin:index' %}" class="button">← Назад в админку</a></p>
+{% endblock %}

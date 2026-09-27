@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<div class="text-center" style="margin-top: 40px;">
+    <h1 style="color: #ff4757; font-size: 3.5rem;">{{ title }}</h1>
+    <p style="font-size: 1.8rem; color: #3742fa;">{{ slogan }}</p>
+    <div class="alert" style="margin: 30px auto; max-width: 600px;">
+        🎁 {{ special_offer }}
+    </div>
+    <a href="{% url 'kids_cafe:catalog' %}" class="btn btn-kid" style="font-size: 1.2rem;">🍽 Смотреть меню</a>
+</div>
+<div class="row" style="margin-top: 60px;">
+    <div class="col">
+        <div class="card text-center">
+            <div style="font-size: 4rem;">🍔</div>
+            <h3>Вкусная еда</h3>
+            <p>Только натуральные продукты, детское меню от шеф-повара.</p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center">
+            <div style="font-size: 4rem;">🎈</div>
+            <h3>Игровая зона</h3>
+            <p>Бассейн с шариками, горки, настольные игры.</p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center">
+            <div style="font-size: 4rem;">🎉</div>
+            <h3>Праздники</h3>
+            <p>Проведём день рождения вашего ребёнка на ура!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

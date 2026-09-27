@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<h1>📊 Статистика кафе «Сладкая страна»</h1>
+
+<!-- Навигационные вкладки -->
+<div style="margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+    <a href="{% url 'admin:statistics' %}" class="button" style="background-color: #79aec8;">📈 Графики и CSV</a>
+    <a href="{% url 'admin:popular_dishes' %}" class="button" style="background-color: #ffa502;">🍽️ Популярные блюда (таблица)</a>
+    <a href="{% url 'admin:negative_feedback' %}" class="button" style="background-color: #ff6b6b;">⚠️ Негативные отзывы</a>
+</div>
+
+<!-- Кнопки выгрузки CSV -->
+<div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
+    <a href="{% url 'admin:export_feedback_csv' %}" class="button" style="background-color: #2ed573;">📥 Скачать отзывы (CSV)</a>
+    <a href="{% url 'admin:export_comments_csv' %}" class="button" style="background-color: #2ed573;">📥 Скачать комментарии (CSV)</a>
+    <a href="{% url 'admin:export_popular_csv' %}" class="button" style="background-color: #2ed573;">📥 Скачать топ блюд (CSV)</a>
+</div>
+
+<!-- Графики -->
+<div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;">
+    {% if popular_plot %}
+    <div style="background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3>🍽️ Самые популярные блюда</h3>
+        <img src="data:image/png;base64,{{ popular_plot }}" style="max-width: 100%;">
+    </div>
+    {% endif %}
+    {% if ratings_plot %}
+    <div style="background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3>⭐ Распределение оценок</h3>
+        <img src="data:image/png;base64,{{ ratings_plot }}" style="max-width: 100%;">
+    </div>
+    {% endif %}
+    {% if trend_plot %}
+    <div style="background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3>📈 Динамика отзывов</h3>
+        <img src="data:image/png;base64,{{ trend_plot }}" style="max-width: 100%;">
+    </div>
+    {% endif %}
+</div>
+
+<p style="margin-top: 30px;"><a href="{% url 'admin:index' %}">← На главную админки</a></p>
+{% endblock %}

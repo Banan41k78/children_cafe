@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1 class="text-center" style="color:#3742fa; margin-bottom: 40px;">{{ title }}</h1>
+<div class="menu-grid">
+    {% for item in items %}
+    <div class="menu-item-card">
+        {% if item.image %}
+        <img src="{{ item.image.url }}" alt="{{ item.title }}">
+        {% else %}
+        <img src="{% static 'images/placeholder.jpg' %}" alt="Нет фото">
+        {% endif %}
+        <div class="info">
+            <h3>{{ item.title }}</h3>
+				
+	{% if item.avg_rating %}
+	<div class="rating-stars">
+		{% with rating=item.avg_rating %}
+			{% for i in "12345"|make_list %}
+				{% if forloop.counter <= rating %}
+					★
+				{% else %}
+					☆
+				{% endif %}
+			{% endfor %}
+			<span class="rating-value">({{ rating }})</span>
+		</div>
+		{% endwith %}
+	{% else %}
+		<div class="rating-stars">☆☆☆☆☆ (нет оценок)</div>
+	{% endif %}
+	
+			<p>{{ item.description|truncatewords:10 }}</p>
+            <p><strong>Цена:</strong> {{ item.price }} ₽</p>
+            <a href="{% url 'kids_cafe:product_detail' item.id %}" class="btn btn-kid">Подробнее</a>
+        </div>
+    </div>
+    {% empty %}
+    <p>Меню временно пусто.</p>
+    {% endfor %}
+</div>
+{% endblock %}
