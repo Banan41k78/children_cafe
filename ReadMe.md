@@ -19,6 +19,42 @@
 
 ## Структура проекта
 
+| Путь | Назначение |
+|---|---|
+| `cafe_project/` | Конфигурация Django-проекта (`settings.py`, `urls.py`, `wsgi.py`) |
+| `kids_cafe/` | Основное приложение: модели, вьюхи, формы, админка |
+| `kids_cafe/migrations/` | Миграции БД (5 штук: от `initial` до `feedback`) |
+| `kids_cafe/templatetags/` | Кастомные фильтры для шаблонов (`base64`, `custom_filters`) |
+| `templates/` | HTML-шаблоны: `base.html`, страницы сайта, регистрация, админка |
+| `templates/kids_cafe/` | Страницы пользовательской части (главная, каталог, аренда, вакансии) |
+| `templates/registration/` | `login.html`, `register.html`, `profile.html` |
+| `templates/admin/` | Кастомные страницы статистики в админке |
+| `media/` | Загружаемые пользователем файлы (фото меню) |
+| `static_dev/` | Статика для разработки (логотип, favicon, картинки) |
+| `manage.py` | Управляющий скрипт Django |
+| `requirements.txt` | Список Python-зависимостей |
+
+## Модели данных
+
+| Модель | Назначение | Ключевые поля |
+|---|---|---|
+| `Product` | Блюдо из меню | `name`, `description`, `price`, `image`, `category` |
+| `ItemComment` | Комментарий пользователя к блюду | `item`, `user`, `text`, `created_at` |
+| `Feedback` | Отзыв / обращение через форму обратной связи | `user`, `text`, `rating`, `created_at` |
+| `HallRental` | Заявка на аренду зала | `user`, `date`, `contact`, `comment` |
+| `JobApplication` | Отклик на вакансию | `user`, `position`, `resume`, `created_at` |
+| `UserProfile` | Дополнительная информация о пользователе | `user`, `phone`, `avatar`, `birth_date` |
+
+### Связи между моделями
+
+```
+User ──1:1── UserProfile
+User ──1:N── ItemComment ──N:1── Product
+User ──1:N── Feedback
+User ──1:N── HallRental
+User ──1:N── JobApplication
+```
+
 ## Установка и запуск
 
 ### 1. Клонировать репозиторий
@@ -42,3 +78,31 @@ Linux / macOS:
 python3 -m venv venv
 source venv/bin/activate
 ```
+### 3. Установить зависимости
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Применить миграции
+
+```bash
+python manage.py migrate
+```
+
+### 5. Создать суперпользователя (для доступа в админку)
+
+```bash
+python manage.py createsuperuser
+```
+
+### 6. Запустить сервер
+
+```bash
+python manage.py runserver
+```
+
+Сайт: http://127.0.0.1:8000/
+
+Админ панель: http://127.0.0.1:8000/admin/
+
